@@ -1,0 +1,67 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  id          String   @id @db.VarChar(10)
+  userName    String   @db.VarChar(100)
+  avatar      String   @db.VarChar(250)
+  email       String   @db.VarChar(255)
+  password    String   @db.VarChar(50)
+  accountType String   @db.VarChar(10)
+  createdAt   DateTime @default(now())
+  lovers      Lovers[] @relation("loverUser")
+}
+
+model Prodcuts {
+  id          String   @id @db.VarChar(10)
+  name        String   @db.VarChar(250)
+  image       String   @db.VarChar(250)
+  noteD       Json     @db.Json
+  description Json     @db.Json
+  accountType String   @db.VarChar(10)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+  images      Images[] @relation("images")
+  lovers      Lovers[] @relation("lover")
+}
+
+model Lovers {
+  id        String   @id
+  productId String   @db.VarChar(10)
+  product   Prodcuts @relation("lover", fields: productId, references: id)
+  userId    String   @db.VarChar(10)
+  user      Users    @relation("loverUser", fields: userId, references: id)
+  createdAt DateTime @default(now())
+}
+
+model Images {
+  id        String   @id
+  productId String   @db.VarChar(10)
+  product   Prodcuts @relation("images", fields: productId, references: id)
+  userId    String   @db.VarChar(10)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+}
+
+model InfoDouDou {
+  id       String @id @db.VarChar(10)
+  phone    String @db.VarChar(15)
+  email    String @db.VarChar(255)
+  tiktok   String @db.VarChar(200)
+  phopee   String @db.VarChar(200)
+  intagram String @db.VarChar(200)
+  zalo     String @db.VarChar(50)
+  facebook String @db.VarChar(200)
+}
