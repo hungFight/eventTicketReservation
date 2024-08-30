@@ -1,12 +1,12 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 
 export class ForbiddenException extends HttpException {
-    constructor(massage: string) {
+    constructor(message: string) {
         const response = {
-            statusCode: HttpStatus.FORBIDDEN,
-            message: massage,
+            statusCode: HttpStatus.CONFLICT,
+            message: message,
             timestamp: new Date().toISOString(),
         };
-        super(response, HttpStatus.FORBIDDEN);
+        super(response, HttpStatus.CONFLICT);
     }
 }

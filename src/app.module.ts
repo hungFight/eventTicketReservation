@@ -1,24 +1,23 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { MongooseModule } from '@nestjs/mongoose';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { UsersModule } from './modules/users/users.module';
+import { ConfigModule } from '@nestjs/config';
+import { EventController } from './modules/event/event.controller';
+import { EventModule } from './modules/event/event.module';
+import { PrismaService } from './prisma.service';
+import { FloorModule } from './modules/floor/floor.module';
+import { SeatTypeModule } from './modules/seat-type/seat-type.module';
+import { SeatModule } from './modules/seat/seat.module';
 
 @Module({
     imports: [
-        UsersModule,
+        EventModule,
+        FloorModule,
+        SeatTypeModule,
+        SeatModule,
         ConfigModule.forRoot({
             isGlobal: true,
         }),
-
-        // MongooseModule.forRootAsync({
-        //   imports: [ConfigModule],
-        //   useFactory: async (configService: ConfigService) => ({
-        //     uri: configService.get<string>('MONGODB_URI'),
-        //   }),
-        //   inject: [ConfigService],
-        // }),
     ],
     controllers: [AppController],
     providers: [AppService],

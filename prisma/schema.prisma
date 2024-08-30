@@ -13,55 +13,54 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Users {
-  id          String   @id @db.VarChar(10)
-  userName    String   @db.VarChar(100)
-  avatar      String   @db.VarChar(250)
-  email       String   @db.VarChar(255)
-  password    String   @db.VarChar(50)
-  accountType String   @db.VarChar(10)
-  createdAt   DateTime @default(now())
-  lovers      Lovers[] @relation("loverUser")
+model Events {
+  id        String      @id @db.VarChar(50)
+  name      String      @db.VarChar(250)
+  address   String      @db.VarChar(250)
+  createdAt DateTime    @default(now())
+  floors    Floors[]    @relation("floorEvent")
+  seatTypes SeatTypes[] @relation("seatTypeEvent")
 }
 
-model Prodcuts {
-  id          String   @id @db.VarChar(10)
-  name        String   @db.VarChar(250)
-  image       String   @db.VarChar(250)
-  noteD       Json     @db.Json
-  description Json     @db.Json
-  accountType String   @db.VarChar(10)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now())
-  images      Images[] @relation("images")
-  lovers      Lovers[] @relation("lover")
-}
-
-model Lovers {
-  id        String   @id
-  productId String   @db.VarChar(10)
-  product   Prodcuts @relation("lover", fields: productId, references: id)
-  userId    String   @db.VarChar(10)
-  user      Users    @relation("loverUser", fields: userId, references: id)
+model Floors {
+  id        String   @id @db.VarChar(50)
+  number    Int
+  eventId   String   @db.VarChar(50)
+  event     Events   @relation("floorEvent", fields: eventId, references: id)
   createdAt DateTime @default(now())
+  seats     Seats[]  @relation("seatFloor")
 }
 
-model Images {
-  id        String   @id
-  productId String   @db.VarChar(10)
-  product   Prodcuts @relation("images", fields: productId, references: id)
-  userId    String   @db.VarChar(10)
+model SeatTypes {
+  id        String   @id @db.VarChar(50)
+  eventId   String   @db.VarChar(50)
+  event     Events   @relation("seatTypeEvent", fields: eventId, references: id)
+  name      String   @db.VarChar(10)
+  price     Float
+  quantity  Int
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
+  seats     Seats[]  @relation("seatType")
 }
 
-model InfoDouDou {
-  id       String @id @db.VarChar(10)
-  phone    String @db.VarChar(15)
-  email    String @db.VarChar(255)
-  tiktok   String @db.VarChar(200)
-  phopee   String @db.VarChar(200)
-  intagram String @db.VarChar(200)
-  zalo     String @db.VarChar(50)
-  facebook String @db.VarChar(200)
+model Seats {
+  id          String    @id @db.VarChar(50)
+  floorId     String    @db.VarChar(50)
+  floor       Floors    @relation("seatFloor", fields: floorId, references: id)
+  seatTypeId  String    @db.VarChar(50)
+  seatType    SeatTypes @relation("seatType", fields: seatTypeId, references: id)
+  number      Int
+  status      String    @default("empty") @db.VarChar(10)
+  description Json?     @db.Json
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now())
+}
+
+model Details {
+  id           String   @id @db.VarChar(50)
+  ticketNumber Int
+  seatId       String   @db.VarChar(50)
+  status       Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now())
 }
