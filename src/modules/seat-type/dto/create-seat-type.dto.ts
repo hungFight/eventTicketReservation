@@ -1,8 +1,8 @@
-import { IsEmail, IsNotEmpty, IsString, Max, MaxLength, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, IsUUID, Max, MaxLength, MinLength } from 'class-validator';
 
 export class CreateSeatTypeDto {
     @IsNotEmpty()
-    @IsString()
+    @IsUUID()
     @MaxLength(50)
     eventId: string;
 

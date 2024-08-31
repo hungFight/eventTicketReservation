@@ -1,4 +1,4 @@
-import { IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
+import { IsInt, IsNotEmpty, IsString, IsUUID, Min } from 'class-validator';
 
 export class CreateFloorDto {
     @IsNotEmpty({ message: 'Số tầng không được để trống' })
@@ -7,6 +7,6 @@ export class CreateFloorDto {
     number: number;
 
     @IsNotEmpty({ message: 'ID sự kiện không được để trống' })
-    @IsString()
+    @IsUUID()
     eventId: string;
 }

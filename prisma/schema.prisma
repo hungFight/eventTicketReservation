@@ -13,6 +13,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Status {
+  empty
+  inProcess
+  full // Add more types if needed
+}
+
 model Events {
   id        String      @id @db.VarChar(50)
   name      String      @db.VarChar(250)
@@ -39,8 +45,10 @@ model SeatTypes {
   price     Float
   quantity  Int
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   seats     Seats[]  @relation("seatType")
+
+  @@index([name])
 }
 
 model Seats {
@@ -50,17 +58,41 @@ model Seats {
   seatTypeId  String    @db.VarChar(50)
   seatType    SeatTypes @relation("seatType", fields: seatTypeId, references: id)
   number      Int
-  status      String    @default("empty") @db.VarChar(10)
+  status      Status    @default(empty) // for procces
   description Json?     @db.Json
   createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  ticket      Tickets[] @relation("seatTicket")
 }
 
-model Details {
-  id           String   @id @db.VarChar(50)
-  ticketNumber Int
-  seatId       String   @db.VarChar(50)
-  status       Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @default(now())
+model Tickets {
+  id            String     @id @db.VarChar(50)
+  ticketCodeId  String     @db.VarChar(50)
+  ticketCode    TicketCode @relation("ticketCodeTickets", fields: ticketCodeId, references: id)
+  seatId        String     @db.VarChar(50)
+  seat          Seats      @relation("seatTicket", fields: seatId, references: id)
+  paymentStatus Boolean    @default(false) // for payment
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@unique([seatId])
+  @@index([ticketCodeId])
+}
+
+model TicketCode {
+  id        String    @id @db.VarChar(50)
+  code      String    @db.VarChar(11)
+  userId    String    @db.VarChar(50)
+  user      Users     @relation("userCode", fields: userId, references: id)
+  expired   DateTime?
+  createdAt DateTime  @default(now())
+  tickets   Tickets[] @relation("ticketCodeTickets")
+}
+
+model Users {
+  id         String       @id @db.VarChar(50)
+  budget     Float        @default(10000000)
+  fullName   String       @db.VarChar(50)
+  createdAt  DateTime     @default(now())
+  TicketCode TicketCode[] @relation("userCode")
 }

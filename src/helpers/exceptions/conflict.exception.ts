@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 
-export class ForbiddenException extends HttpException {
+export class ConflictException extends HttpException {
     constructor(message: string) {
         const response = {
             statusCode: HttpStatus.CONFLICT,
