@@ -29,23 +29,23 @@ export class EventService {
     }
 
     async update(id: string, updateEventDto: UpdateEventDto) {
-        const event = await this.prisma.events.findUnique({ where: { id } });
-        if (!event) throw new NotFoundException(`Event with ID ${id} not found`);
         try {
+            const event = await this.prisma.events.findUnique({ where: { id } });
+            if (!event) throw new NotFoundException(`Event with ID ${id} not found`);
             return await this.prisma.events.update({
                 where: { id },
                 data: updateEventDto,
             });
         } catch (error) {
+            if (error.code === 'P2025') throw new NotFoundException(`Event with ID ${id} not found`);
             throw new InternalServerErrorException(error, `Failed to update event with ID: ${id}`);
         }
     }
 
     async remove(id: string) {
-        const event = await this.prisma.events.findUnique({ where: { id }, select: { name: true, floors: { select: { id: true } } } });
-        if (!event) throw new NotFoundException(`Event with ID ${id} not found`);
-        const floorIds = event.floors.map((r) => r.id);
         try {
+            const event = await this.prisma.events.findUnique({ where: { id }, select: { name: true, floors: { select: { id: true } } } });
+            const floorIds = event.floors.map((r) => r.id);
             await this.prisma.$transaction(async (prisma) => {
                 //remove data in a consistent await
                 await prisma.seats.deleteMany({ where: { floorId: { in: floorIds } } });
@@ -54,6 +54,7 @@ export class EventService {
             });
             return `Delete ${event.name} event successful`;
         } catch (error) {
+            if (error.code === 'P2025') throw new NotFoundException(`Event with ID ${id} not found`);
             throw new InternalServerErrorException(error, `Failed to remove event with ID: ${id}`);
         }
     }

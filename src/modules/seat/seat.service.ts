@@ -65,6 +65,7 @@ export class SeatService {
         try {
             return await this.prisma.seats.delete({ where: { id } });
         } catch (error) {
+            if (error.code === 'P2025') throw new NotFoundException(`Seat with ID ${id} not found`);
             throw new InternalServerErrorException(error, 'Failed to delete seat data');
         }
     }

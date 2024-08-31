@@ -3,6 +3,7 @@ import { CreateSeatTypeDto } from './dto/create-seat-type.dto';
 import { UpdateSeatTypeDto } from './dto/update-seat-type.dto';
 import { v4 as uuidv4 } from 'uuid';
 import { PrismaService } from 'src/prisma.service';
+import { NotFoundException } from 'src/helpers/exceptions/notFound.exception';
 
 @Injectable()
 export class SeatTypeService {
@@ -10,7 +11,7 @@ export class SeatTypeService {
 
     async create(createSeatTypeDto: CreateSeatTypeDto) {
         try {
-            if (!this.findOneByEventIdAndName(createSeatTypeDto.eventId, createSeatTypeDto.name)) {
+            if (!(await this.findOneByIdAndName(createSeatTypeDto.eventId, 'eventId', createSeatTypeDto.name))) {
                 const id = uuidv4();
                 return await this.prisma.seatTypes.create({ data: { ...createSeatTypeDto, id } });
             }
@@ -24,7 +25,7 @@ export class SeatTypeService {
         try {
             return await this.prisma.seatTypes.findMany();
         } catch (error) {
-            throw new InternalServerErrorException('Failed to retrieve seat types');
+            throw new InternalServerErrorException(error, 'Failed to retrieve seat types');
         }
     }
     async findOne(id: string) {
@@ -34,22 +35,27 @@ export class SeatTypeService {
             throw new InternalServerErrorException(`Failed to retrieve seat type with ID: ${id}`);
         }
     }
-    async findOneByEventIdAndName(eventId: string, name: string) {
+    async findOneByIdAndName(id: string, who: 'eventId' | 'id', name?: string) {
         try {
-            return await this.prisma.seatTypes.findFirst({ where: { eventId, name } });
+            if (!name) return false;
+            return await this.prisma.seatTypes.findFirst({ where: { [who]: id, name } });
         } catch (error) {
-            throw new InternalServerErrorException(`Failed to retrieve seat type with name: ${name}`);
+            throw new InternalServerErrorException(error, `Failed to retrieve seat type with name: ${name}`);
         }
     }
 
     async update(id: string, updateSeatTypeDto: UpdateSeatTypeDto) {
         try {
-            return await this.prisma.seatTypes.update({
-                where: { id },
-                data: updateSeatTypeDto,
-            });
+            const event = await this.findOneByIdAndName(id, 'id', updateSeatTypeDto.name);
+            if (!event) {
+                return await this.prisma.seatTypes.update({
+                    where: { id },
+                    data: updateSeatTypeDto,
+                });
+            }
+            throw new ConflictException(`Loại ghế ${updateSeatTypeDto.name} đã tồn tại`);
         } catch (error) {
-            throw new InternalServerErrorException(`Failed to update seat type with ID: ${id}`);
+            throw new InternalServerErrorException(error, `Failed to update seat type with ID: ${id}`);
         }
     }
 
@@ -57,7 +63,11 @@ export class SeatTypeService {
         try {
             return await this.prisma.seatTypes.delete({ where: { id } });
         } catch (error) {
-            throw new InternalServerErrorException(`Failed to remove seat type with ID: ${id}`);
+            if (error.code === 'P2025') {
+                // Prisma specific error code for record not found
+                throw new NotFoundException(`Seat type with ID ${id} not found`);
+            }
+            throw new InternalServerErrorException(error, `Failed to remove seat type with ID: ${id}`);
         }
     }
 }

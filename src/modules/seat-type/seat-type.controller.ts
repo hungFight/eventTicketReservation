@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { SeatTypeService } from './seat-type.service';
 import { CreateSeatTypeDto } from './dto/create-seat-type.dto';
 import { UpdateSeatTypeDto } from './dto/update-seat-type.dto';
+import { NotFoundException } from 'src/helpers/exceptions/notFound.exception';
 
 @Controller('seatType')
 export class SeatTypeController {
@@ -18,17 +19,17 @@ export class SeatTypeController {
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.seatTypeService.findOne(id);
+    async findOne(@Param('id') id: string) {
+        return await this.seatTypeService.findOne(id);
     }
 
-    @Patch(':id')
-    update(@Param('id') id: string, @Body() updateSeatTypeDto: UpdateSeatTypeDto) {
-        return this.seatTypeService.update(id, updateSeatTypeDto);
+    @Patch('update/:id')
+    async update(@Param('id') id: string, @Body() updateSeatTypeDto: UpdateSeatTypeDto) {
+        return await this.seatTypeService.update(id, updateSeatTypeDto);
     }
 
-    @Delete(':id')
-    remove(@Param('id') id: string) {
-        return this.seatTypeService.remove(id);
+    @Delete('delete/:id')
+    async remove(@Param('id') id: string) {
+        return await this.seatTypeService.remove(id);
     }
 }
