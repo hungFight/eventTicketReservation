@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { v4 } from 'uuid';
@@ -6,6 +6,8 @@ import { generateUniqueCode } from 'src/helpers/utils';
 import { NotFoundException } from 'src/helpers/exceptions/notFound.exception';
 import { ConflictException } from 'src/helpers/exceptions/conflict.exception';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
+import { ConfirmTicketDto } from './dto/confirm-ticket.dto';
+import { CustomException } from 'src/helpers/exceptions/Custom.exception';
 @Injectable()
 export class TicketService {
     constructor(private prisma: PrismaService) {}
@@ -40,28 +42,42 @@ export class TicketService {
             throw new InternalServerErrorException(error, 'Failed to create Ticket');
         }
     }
-    async findAllTicketsAvailable() {
+    async findAllTicketsAvailable(eventId: string) {
         try {
-            const countSeat = await this.prisma.seats.count({ where: { status: 'empty' } });
-            const seats = await this.prisma.seats.findMany({
-                where: { status: 'empty' },
-                select: {
-                    id: true,
-                    number: true,
-                    description: true,
-                    floor: { select: { number: true, event: { select: { name: true, address: true } } } },
-                    seatType: { select: { name: true, price: true } },
+            // find all tickets are available
+            const existSeats = await this.prisma.events.findMany({
+                where: { id: eventId },
+                include: {
+                    seatTypes: {
+                        select: {
+                            id: true,
+                            name: true,
+                            price: true,
+                            seats: {
+                                where: { status: 'empty' },
+                                select: {
+                                    id: true,
+                                    number: true,
+                                    description: true,
+                                    status: true,
+                                    createdAt: true,
+                                    floor: true,
+                                },
+                            },
+                        },
+                    },
                 },
             });
-            return { seats, remainingSeats: countSeat };
+            return existSeats;
         } catch (error) {
-            throw new InternalServerErrorException(error, `Failed to retrieve seat type with name: ${name}`);
+            throw new InternalServerErrorException(error, `Failed to retrieve seat `);
         }
     }
     async findAllTicketsInProcess() {
         try {
             const status = 'inProcess';
             const countSeat = await this.prisma.seats.count({ where: { status } });
+            // find tickets are in process of payment
             const seats = await this.prisma.seats.findMany({
                 where: { status },
                 select: {
@@ -77,11 +93,73 @@ export class TicketService {
             throw new InternalServerErrorException(error, `Failed to retrieve inProcess ticket`);
         }
     }
-    findAll() {
-        return `This action returns all ticket`;
+    async findAllBookingDetailByUserId(userId: string) {
+        try {
+            // find all user's booking details
+            const ticketCodes = await this.prisma.ticketCode.findMany({
+                where: { userId },
+                select: {
+                    id: true,
+                    code: true,
+                    tickets: { include: { seat: { select: { id: true, number: true, seatType: { select: { id: true, name: true, price: true } } } } } },
+                    user: { select: { id: true, fullName: true } },
+                    createdAt: true,
+                },
+            });
+            // calculate tickets for many
+            const ticketCosts = ticketCodes.map((r) => {
+                const totalCost = r.tickets.reduce((sum, t) => {
+                    return sum + t.seat.seatType.price || 0;
+                }, 0);
+                return { totalCost, ticketCodes: r };
+            });
+            return ticketCosts;
+        } catch (error) {
+            throw new InternalServerErrorException(error, `Failed to retrieve ticket`);
+        }
     }
-    findOne(id: number) {
-        return `This action returns a #${id} ticket`;
+    async findOneBookingDetailByUserId(userId: string) {
+        try {
+            const ticketCodes = await this.prisma.ticketCode.findFirst({
+                where: { userId },
+                select: {
+                    id: true,
+                    code: true,
+                    tickets: { include: { seat: { select: { id: true, number: true, seatType: { select: { id: true, name: true, price: true } } } } } },
+                    user: { select: { id: true, fullName: true } },
+                    createdAt: true,
+                },
+            });
+            // calculate tickets for one
+            const totalCost = ticketCodes.tickets.reduce((sum, t) => {
+                return sum + t.seat.seatType.price || 0;
+            }, 0);
+            return { totalCost, ticketCodes };
+        } catch (error) {
+            throw new InternalServerErrorException(error, `Failed to retrieve ticket`);
+        }
+    }
+    async confirmBooking(confirmTicketDto: ConfirmTicketDto) {
+        try {
+            await this.prisma.$transaction(async (prisma) => {
+                try {
+                    const ticketInfo = await this.findOneBookingDetailByUserId(confirmTicketDto.userId);
+                    const user = await prisma.users.findUnique({ where: { id: confirmTicketDto.userId } });
+
+                    if (!user) throw new NotFoundException('User is not found!');
+                    if (user.budget < ticketInfo.totalCost) throw new BadRequestException('Insufficient funds to complete the purchase.');
+                    // update the user's budget
+                    const purchase = await prisma.users.update({ where: { id: user.id }, data: { budget: user.budget - ticketInfo.totalCost } });
+                    // update the ticketCode's paymentStatus
+                    if (purchase) await prisma.ticketCode.update({ where: { id: ticketInfo.ticketCodes.id }, data: { paymentStatus: true, expired: null } });
+                    return 'Confirm successfully';
+                } catch (error) {
+                    throw new InternalServerErrorException(error, `Failed to confirm ticket`);
+                }
+            });
+        } catch (error) {
+            throw new InternalServerErrorException(error, `Failed to confirm ticket`);
+        }
     }
     async update(updateTicketDto: UpdateTicketDto[]) {
         try {
@@ -90,7 +168,7 @@ export class TicketService {
                     try {
                         return await this.prisma.tickets.update({ where: { id: t.ticketId }, data: { seatId: t.seatId } });
                     } catch (error) {
-                        throw new InternalServerErrorException(`Failed to update ticket with ID ${t.ticketId}`);
+                        throw new CustomException(error, t.ticketId);
                     }
                 }),
             );

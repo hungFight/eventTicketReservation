@@ -66,27 +66,27 @@ model Seats {
 }
 
 model Tickets {
-  id            String     @id @db.VarChar(50)
-  ticketCodeId  String     @db.VarChar(50)
-  ticketCode    TicketCode @relation("ticketCodeTickets", fields: ticketCodeId, references: id)
-  seatId        String     @db.VarChar(50)
-  seat          Seats      @relation("seatTicket", fields: seatId, references: id)
-  paymentStatus Boolean    @default(false) // for payment
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  id           String     @id @db.VarChar(50)
+  ticketCodeId String     @db.VarChar(50)
+  ticketCode   TicketCode @relation("ticketCodeTickets", fields: ticketCodeId, references: id)
+  seatId       String     @db.VarChar(50)
+  seat         Seats      @relation("seatTicket", fields: seatId, references: id)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   @@unique([seatId])
   @@index([ticketCodeId])
 }
 
 model TicketCode {
-  id        String    @id @db.VarChar(50)
-  code      String    @db.VarChar(11)
-  userId    String    @db.VarChar(50)
-  user      Users     @relation("userCode", fields: userId, references: id)
-  expired   DateTime?
-  createdAt DateTime  @default(now())
-  tickets   Tickets[] @relation("ticketCodeTickets")
+  id            String    @id @db.VarChar(50)
+  code          String    @db.VarChar(11)
+  userId        String    @db.VarChar(50)
+  user          Users     @relation("userCode", fields: userId, references: id)
+  paymentStatus Boolean   @default(false) // for payment
+  expired       DateTime?
+  createdAt     DateTime  @default(now())
+  tickets       Tickets[] @relation("ticketCodeTickets")
 }
 
 model Users {

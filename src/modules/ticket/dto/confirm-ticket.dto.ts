@@ -1,11 +1,10 @@
 import { IsNotEmpty, IsUUID } from 'class-validator';
 
-export class UpdateTicketDto {
-    @IsNotEmpty()
+export class ConfirmTicketDto {
     @IsUUID()
-    ticketId: string;
-
     @IsNotEmpty()
+    userId: string;
     @IsUUID()
-    seatId: string;
+    @IsNotEmpty()
+    ticketCodeId: string;
 }
