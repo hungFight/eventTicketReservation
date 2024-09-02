@@ -15,9 +15,9 @@ export class UsersService {
         }
     }
 
-    findAll() {
+    async findAll() {
         try {
-            return this.prisma.users.findMany();
+            return await this.prisma.users.findMany();
         } catch (error) {
             throw new InternalServerErrorException(error, 'Failed to retrieve users');
         }
@@ -27,8 +27,12 @@ export class UsersService {
         return `This action returns a #${id} user`;
     }
 
-    update(id: number, updateUserDto: UpdateUserDto) {
-        return `This action updates a #${id} user`;
+    async update(id: string, updateUserDto: UpdateUserDto) {
+        try {
+            return await this.prisma.users.update({ where: { id }, data: updateUserDto });
+        } catch (error) {
+            throw new InternalServerErrorException(error, 'Failed to retrieve users');
+        }
     }
 
     remove(id: number) {

@@ -3,6 +3,7 @@ import { FloorService } from './floor.service';
 import { CreateFloorDto } from './dto/create-floor.dto';
 import { UpdateFloorDto } from './dto/update-floor.dto';
 import { NotFoundException } from 'src/helpers/exceptions/notFound.exception';
+import { isArray } from 'class-validator';
 
 @Controller('floor')
 export class FloorController {
@@ -30,8 +31,9 @@ export class FloorController {
         return await this.floorService.update(id, updateFloorDto);
     }
 
-    @Delete('delete/:id')
-    async remove(@Param('id') id: string) {
-        return await this.floorService.remove(id);
+    @Delete('delete')
+    async remove(@Body() data: { floorId: string | string[] }) {
+        if (isArray(data.floorId)) return await this.floorService.removeMany(data.floorId);
+        return await this.floorService.remove(data.floorId);
     }
 }

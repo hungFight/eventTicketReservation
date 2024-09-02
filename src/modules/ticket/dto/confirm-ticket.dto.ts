@@ -7,4 +7,7 @@ export class ConfirmTicketDto {
     @IsUUID()
     @IsNotEmpty()
     ticketCodeId: string;
+    @IsUUID()
+    @IsNotEmpty()
+    eventId: string;
 }

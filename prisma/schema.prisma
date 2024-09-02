@@ -23,6 +23,7 @@ model Events {
   id        String      @id @db.VarChar(50)
   name      String      @db.VarChar(250)
   address   String      @db.VarChar(250)
+  startTime DateTime
   createdAt DateTime    @default(now())
   floors    Floors[]    @relation("floorEvent")
   seatTypes SeatTypes[] @relation("seatTypeEvent")
@@ -84,7 +85,9 @@ model TicketCode {
   userId        String    @db.VarChar(50)
   user          Users     @relation("userCode", fields: userId, references: id)
   paymentStatus Boolean   @default(false) // for payment
+  canceled      Boolean   @default(true)
   expired       DateTime?
+  history       Json?     @db.Json
   createdAt     DateTime  @default(now())
   tickets       Tickets[] @relation("ticketCodeTickets")
 }

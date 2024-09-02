@@ -44,10 +44,20 @@ export class EventService {
 
     async remove(id: string) {
         try {
-            const event = await this.prisma.events.findUnique({ where: { id }, select: { name: true, floors: { select: { id: true } } } });
+            const event = await this.prisma.events.findUnique({
+                where: { id },
+                select: { seatTypes: { select: { id: true } }, name: true, floors: { select: { id: true, seats: { select: { id: true, ticket: { select: { id: true } } } } } } },
+            });
             const floorIds = event.floors.map((r) => r.id);
+            const realTicketIds = [];
+            event.floors.forEach((r) =>
+                r.seats.forEach((s) => {
+                    realTicketIds.push(s.id);
+                }),
+            );
             await this.prisma.$transaction(async (prisma) => {
-                //remove data in a consistent await
+                // remove data in a consistent await
+                await prisma.tickets.deleteMany({ where: { seatId: { in: realTicketIds } } });
                 await prisma.seats.deleteMany({ where: { floorId: { in: floorIds } } });
                 await prisma.floors.deleteMany({ where: { id: { in: floorIds } } });
                 await prisma.events.delete({ where: { id } });

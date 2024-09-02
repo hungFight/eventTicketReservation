@@ -3,6 +3,7 @@ import { SeatService } from './seat.service';
 import { CreateSeatDto } from './dto/create-seat.dto';
 import { UpdateSeatDto } from './dto/update-seat.dto';
 import { NotFoundException } from 'src/helpers/exceptions/notFound.exception';
+import { isArray } from 'class-validator';
 
 @Controller('seat')
 export class SeatController {
@@ -30,8 +31,9 @@ export class SeatController {
         return await this.seatService.update(id, updateSeatDto);
     }
 
-    @Delete('delete/:id')
-    async remove(@Param('id') id: string) {
-        return await this.seatService.remove(id);
+    @Delete('delete')
+    async remove(@Body() data: { seatId: string[] | string }) {
+        if (isArray(data.seatId)) return await this.seatService.removeMany(data.seatId);
+        else return await this.seatService.remove(data.seatId);
     }
 }

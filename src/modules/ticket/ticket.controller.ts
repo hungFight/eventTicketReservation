@@ -36,8 +36,12 @@ export class TicketController {
         return await this.ticketService.update(updateTicketDto);
     }
 
-    @Delete(':id')
-    async remove(@Param('id') id: string) {
-        return await this.ticketService.remove(+id);
+    @Delete('cancelTicket/:id')
+    async remove(@Param('id') id: string, @Body() data: { userId: string }) {
+        return await this.ticketService.cancelTicket(id, data.userId);
+    }
+    @Delete('deleteTicketCodeByUser/:id')
+    async deleteTicketCode(@Param('id') ticketCodeId: string) {
+        return await this.ticketService.deleteTicketCode(ticketCodeId);
     }
 }

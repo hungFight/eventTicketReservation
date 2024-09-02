@@ -3,7 +3,7 @@ import { ConflictException } from './conflict.exception';
 import { NotFoundException } from './notFound.exception';
 
 export class CustomException extends HttpException {
-    constructor(error: any, value: string | Number) {
+    constructor(error: any, value: string | string[] | Number) {
         const meta = error.meta;
 
         const response: any = {

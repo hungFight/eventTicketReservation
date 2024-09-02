@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
+import { IsDate, IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
 export class CreateEventDto {
     @IsNotEmpty({ message: 'Tên sự kiện không được để trống' })
@@ -10,4 +10,8 @@ export class CreateEventDto {
     @IsString()
     @MaxLength(250, { message: 'Địa chỉ không được quá 250 ký tự' })
     address: string;
+
+    @IsNotEmpty()
+    @IsDate()
+    startTime: string;
 }
