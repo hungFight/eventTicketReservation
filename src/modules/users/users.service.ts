@@ -23,19 +23,11 @@ export class UsersService {
         }
     }
 
-    findOne(id: number) {
-        return `This action returns a #${id} user`;
-    }
-
     async update(id: string, updateUserDto: UpdateUserDto) {
         try {
             return await this.prisma.users.update({ where: { id }, data: updateUserDto });
         } catch (error) {
             throw new InternalServerErrorException(error, 'Failed to retrieve users');
         }
-    }
-
-    remove(id: number) {
-        return `This action removes a #${id} user`;
     }
 }

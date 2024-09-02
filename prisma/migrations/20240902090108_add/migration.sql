@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Events" ADD COLUMN     "budget" INTEGER NOT NULL DEFAULT 5000000;

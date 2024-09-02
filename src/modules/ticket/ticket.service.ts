@@ -28,7 +28,6 @@ export class TicketService {
 
                         if (upSeat.count > 0) {
                             const ticket = await prisma.tickets.createMany({ data: newTicketDto });
-                            console.log(ticketCode, newTicketDto, 'ticket', ticket);
                             return ticket;
                         }
                     }
@@ -176,6 +175,7 @@ export class TicketService {
                     // update the user's budget
                     await prisma.users.update({ where: { id: user.id }, data: { budget: budget } });
                     await prisma.seats.updateMany({ where: { id: { in: seatIds } }, data: { status: 'full' } });
+                    await prisma.events.update({ where: { id: event.id }, data: { budget: { increment: ticketInfo.totalCost } } });
                     // update the ticketCode's paymentStatus
                     const dd = await prisma.ticketCode.update({ where: { id: confirmTicketDto.ticketCodeId }, data: { paymentStatus: true, expired: null, history } });
                 } catch (error) {
@@ -215,23 +215,31 @@ export class TicketService {
             throw new InternalServerErrorException(error, `Failed to delete Ticket code`);
         }
     }
-    async cancelTicket(id: string, userId: string) {
+    async cancelTicket(id: string, userId: string, eventId: string) {
         try {
-            const ticketCode = await this.deleteTicketCode(id);
-            // if (ticketCode.canceled && ticketCode.paymentStatus) {
-            //     const user = await this.prisma.users.findUnique({ where: { id: userId } });
-            //     if(user.id === ticketCode.userId){
-            //      ticketCode.history
-            //     }
-            // }
-            console.log(ticketCode.history, ' ticketCode.history');
+            const event = await this.prisma.events.findUnique({ where: { id: eventId } });
+            if (!event) throw new NotFoundException(`Event record is not available. ${id}`);
+            return await this.prisma.$transaction(async (prisma) => {
+                const eventStartTime = new Date(event.startTime); // the event will start on
+                const currentDate = new Date();
 
-            throw new NotFoundException(`Ticket code record is not available. ${id}`);
+                if (eventStartTime > currentDate) {
+                    // calculate refunds
+                    const costTicket = (await this.findOneBookingDetailByUserId(userId, id)).totalCost;
+                    const totalRefunds = costTicket - (costTicket / 100) * 10;
+                    const ticketCode = await this.deleteTicketCode(id);
+                    if (ticketCode) {
+                        // decrement event budget
+                        const updatedEventBudget = await prisma.events.update({ where: { id: event.id }, data: { budget: { decrement: totalRefunds } } });
+                        // increment user budget
+                        const updatedUser = await prisma.users.update({ where: { id: userId }, data: { budget: { increment: totalRefunds } } });
+
+                        return { message: 'cancel successfully', preEvent: event, currentEvent: updatedEventBudget, updatedUser };
+                    } else throw new NotFoundException('Ticket is not available.');
+                } else return await this.deleteTicketCode(id);
+            });
         } catch (error) {
             throw new InternalServerErrorException(error, `Failed to delete Ticket code`);
         }
-    }
-    remove(id: number) {
-        return `This action removes a #${id} ticket`;
     }
 }

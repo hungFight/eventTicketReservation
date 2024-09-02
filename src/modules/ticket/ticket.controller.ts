@@ -37,8 +37,8 @@ export class TicketController {
     }
 
     @Delete('cancelTicket/:id')
-    async remove(@Param('id') id: string, @Body() data: { userId: string }) {
-        return await this.ticketService.cancelTicket(id, data.userId);
+    async cancelTicket(@Param('id') id: string, @Body() data: { userId: string; eventId: string }) {
+        return await this.ticketService.cancelTicket(id, data.userId, data.eventId);
     }
     @Delete('deleteTicketCodeByUser/:id')
     async deleteTicketCode(@Param('id') ticketCodeId: string) {
