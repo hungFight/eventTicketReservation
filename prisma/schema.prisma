@@ -45,7 +45,6 @@ model SeatTypes {
   event     Events   @relation("seatTypeEvent", fields: eventId, references: id)
   name      String   @db.VarChar(10)
   price     Float
-  quantity  Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   seats     Seats[]  @relation("seatType")
@@ -86,7 +85,6 @@ model TicketCode {
   userId        String    @db.VarChar(50)
   user          Users     @relation("userCode", fields: userId, references: id)
   paymentStatus Boolean   @default(false) // for payment
-  canceled      Boolean   @default(true)
   expired       DateTime?
   history       Json?     @db.Json
   createdAt     DateTime  @default(now())

@@ -13,7 +13,4 @@ export class CreateSeatTypeDto {
 
     @IsNotEmpty({ message: 'Giá không được để trống' })
     price: number;
-
-    @IsNotEmpty({ message: 'Số lượng không được để trống' })
-    quantity: number;
 }

@@ -17,6 +17,8 @@ export class TicketService {
             const seatIds = createTicketDto.data.map((r) => r.seatId);
             const currentTime = new Date();
             const timeExpiration = new Date(currentTime.getTime() + 5 * (60 * 1000));
+            const existingSeats = await this.prisma.seats.findMany({ where: { id: { in: seatIds }, OR: [{ status: 'inProcess' }, { status: 'full' }] }, select: { id: true, status: true } });
+            if (existingSeats.length) throw new ConflictException('These seats are full', existingSeats);
             return await this.prisma.$transaction(async (prisma) => {
                 try {
                     const ticketCode = await prisma.ticketCode.create({ data: { id: v4(), code: uniqueCode, userId: createTicketDto.userId, expired: timeExpiration } });
@@ -37,7 +39,9 @@ export class TicketService {
                 }
             }); //This means that either all the operations within the transaction are completed successfully}
         } catch (error) {
-            if (error.code === 'P2002') throw new ConflictException('Tickets are already exists.');
+            const seatIds = createTicketDto.data.map((r) => r.seatId);
+            const existingSeats = await this.prisma.seats.findMany({ where: { id: { in: seatIds }, OR: [{ status: 'inProcess' }, { status: 'full' }] }, select: { id: true, status: true } });
+            if (error.code === 'P2002') throw new ConflictException('Tickets are already exists.', existingSeats);
             throw new InternalServerErrorException(error, 'Failed to create Ticket');
         }
     }
@@ -215,19 +219,19 @@ export class TicketService {
             throw new InternalServerErrorException(error, `Failed to delete Ticket code`);
         }
     }
-    async cancelTicket(id: string, userId: string, eventId: string) {
+    async cancelTicket(ticketCodeId: string, userId: string, eventId: string) {
         try {
             const event = await this.prisma.events.findUnique({ where: { id: eventId } });
-            if (!event) throw new NotFoundException(`Event record is not available. ${id}`);
+            if (!event) throw new NotFoundException(`Event record is not available. ${eventId}`);
             return await this.prisma.$transaction(async (prisma) => {
                 const eventStartTime = new Date(event.startTime); // the event will start on
                 const currentDate = new Date();
 
                 if (eventStartTime > currentDate) {
                     // calculate refunds
-                    const costTicket = (await this.findOneBookingDetailByUserId(userId, id)).totalCost;
+                    const costTicket = (await this.findOneBookingDetailByUserId(userId, ticketCodeId)).totalCost;
                     const totalRefunds = costTicket - (costTicket / 100) * 10;
-                    const ticketCode = await this.deleteTicketCode(id);
+                    const ticketCode = await this.deleteTicketCode(ticketCodeId);
                     if (ticketCode) {
                         // decrement event budget
                         const updatedEventBudget = await prisma.events.update({ where: { id: event.id }, data: { budget: { decrement: totalRefunds } } });
@@ -236,7 +240,7 @@ export class TicketService {
 
                         return { message: 'cancel successfully', preEvent: event, currentEvent: updatedEventBudget, updatedUser };
                     } else throw new NotFoundException('Ticket is not available.');
-                } else return await this.deleteTicketCode(id);
+                } else return await this.deleteTicketCode(ticketCodeId);
             });
         } catch (error) {
             throw new InternalServerErrorException(error, `Failed to delete Ticket code`);
