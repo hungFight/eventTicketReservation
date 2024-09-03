@@ -18,7 +18,7 @@ export class FloorService {
                 return await this.prisma.floors.create({ data: { ...createFloorDto, id } });
             } else throw new ConflictException(`This floor already had ${createFloorDto.number}`);
         } catch (error) {
-            throw new InternalServerErrorException(error, 'Failed to create Floor');
+            throw new CustomException(error, createFloorDto.eventId);
         }
     }
 

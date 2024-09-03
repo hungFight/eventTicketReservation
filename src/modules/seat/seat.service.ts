@@ -4,6 +4,7 @@ import { UpdateSeatDto } from './dto/update-seat.dto';
 import { PrismaService } from 'src/prisma.service';
 import { v4 as uuidv4 } from 'uuid';
 import { NotFoundException } from 'src/helpers/exceptions/notFound.exception';
+import { CustomException } from 'src/helpers/exceptions/Custom.exception';
 
 @Injectable()
 export class SeatService {
@@ -18,7 +19,7 @@ export class SeatService {
             }
             return `Ghế này đã tồn tại ( Tầng ${isExistSeat.floor.number} - Loại ghế ${isExistSeat.seatType.name} - Số ${isExistSeat.number} )`;
         } catch (error) {
-            throw new InternalServerErrorException(error, 'Failed to create seat');
+            throw new CustomException(error, [createSeatDto.floorId, createSeatDto.seatTypeId]);
         }
     }
 

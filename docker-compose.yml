@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+    app:
+        image: node:20.10.0
+        container_name: ticketReservation
+        working_dir: /app
+        volumes:
+            - ./:/app
+        ports:
+            - '3000:3000'
+        environment:
+            - DATABASE_URL=postgresql://postgres:sql05072003@postgres:5432/eventticket?connect_timeout=300
+            - YARN_NETWORK_TIMEOUT=600000
+        command: sh -c "yarn install && npx prisma migrate dev && yarn run start:dev"
+        depends_on:
+            - postgres
+        networks:
+            - nest_network
+        restart: unless-stopped
+
+    postgres:
+        image: postgres:16.4
+        container_name: postgres_db
+        ports:
+            - 5432:5432
+        expose:
+            - 5432
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: sql05072003
+            POSTGRES_DB: eventticket
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        networks:
+            - nest_network
+        restart: unless-stopped
+
+networks:
+    nest_network:
+
+volumes:
+    postgres_data:

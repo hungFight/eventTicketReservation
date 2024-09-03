@@ -41,8 +41,7 @@ export class TicketService {
         } catch (error) {
             const seatIds = createTicketDto.data.map((r) => r.seatId);
             const existingSeats = await this.prisma.seats.findMany({ where: { id: { in: seatIds }, OR: [{ status: 'inProcess' }, { status: 'full' }] }, select: { id: true, status: true } });
-            if (error.code === 'P2002') throw new ConflictException('Tickets are already exists.', existingSeats);
-            throw new InternalServerErrorException(error, 'Failed to create Ticket');
+            throw new CustomException(error, '', { message: 'Tickets are already exists.', existingSeats });
         }
     }
     async findAllTicketsAvailable(eventId: string) {

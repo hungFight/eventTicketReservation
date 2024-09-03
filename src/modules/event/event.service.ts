@@ -4,6 +4,7 @@ import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { PrismaService } from 'src/prisma.service';
 import { NotFoundException } from 'src/helpers/exceptions/notFound.exception';
+import { CustomException } from 'src/helpers/exceptions/Custom.exception';
 @Injectable()
 export class EventService {
     constructor(private prisma: PrismaService) {}
@@ -12,7 +13,7 @@ export class EventService {
             const id = uuidv4();
             return await this.prisma.events.create({ data: { ...createEventDto, id } });
         } catch (error) {
-            throw new InternalServerErrorException(error, 'Failed to create Event');
+            throw new CustomException(error, 'Failed to create Event');
         }
     }
     async findAll() {

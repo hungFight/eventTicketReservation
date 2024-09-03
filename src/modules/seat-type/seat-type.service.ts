@@ -18,7 +18,7 @@ export class SeatTypeService {
             }
             throw new ConflictException(`Tên ghế đã tồn tại ${createSeatTypeDto.name}`);
         } catch (error) {
-            throw new InternalServerErrorException(error, 'Failed to create seat type');
+            throw new CustomException(error, createSeatTypeDto.eventId);
         }
     }
 
