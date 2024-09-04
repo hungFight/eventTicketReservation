@@ -12,7 +12,7 @@ RUN yarn install --network-timeout 10000000
 
 # Copy the rest of the application code
 COPY . .
-
+RUN npx prisma generate dev
 # Build the application
 RUN yarn run build
 

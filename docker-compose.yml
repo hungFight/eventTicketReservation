@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
     app:
         image: node:20.10.0
@@ -30,6 +28,7 @@ services:
             POSTGRES_USER: postgres
             POSTGRES_PASSWORD: sql05072003
             POSTGRES_DB: eventticket
+            POSTGRES_HOST_AUTH_METHOD: trust
         volumes:
             - postgres_data:/var/lib/postgresql/data
         networks:
